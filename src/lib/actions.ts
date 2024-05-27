@@ -52,10 +52,8 @@ export async function createFriendRequest(formData: FormData) {
       throw new Error("Already friends with this user.");
     }
 
-    console.log("before pusherServer triggered");
-    console.log(toPusherKey(`user:${idToAdd}:incoming_friend_requests`));
     // valid request, send friend request
-    pusherServer.trigger(
+    await pusherServer.trigger(
       toPusherKey(`user:${idToAdd}:incoming_friend_requests`),
       "incoming_friend_requests",
       {
@@ -63,8 +61,6 @@ export async function createFriendRequest(formData: FormData) {
         senderEmail: session.user.email,
       },
     );
-
-    console.log("pusherServer triggered");
 
     db.sadd(`user:${idToAdd}:incoming_friend_requests`, session.user.id);
   } catch (error) {
@@ -94,16 +90,32 @@ export async function acceptFriendRequest(id: string) {
       throw new Error("No friend request.");
     }
 
-    // notify added user
-    pusherServer.trigger(
-      toPusherKey(`user:${idToAdd}:friends`),
-      "new_friend",
-      null,
-    );
+    const [userRaw, friendRaw]: [string, string] = await Promise.all([
+      fetchRedis("get", `user:${session.user.id}`),
+      fetchRedis("get", `user:${idToAdd}`),
+    ]);
 
-    db.sadd(`user:${session.user.id}:friends`, idToAdd);
-    db.sadd(`user:${idToAdd}:friends`, session.user.id);
-    db.srem(`user:${session.user.id}:incoming_friend_requests`, idToAdd);
+    const [user, friend]: [User, User] = [
+      JSON.parse(userRaw),
+      JSON.parse(friendRaw),
+    ];
+
+    // notify added user
+    await Promise.all([
+      pusherServer.trigger(
+        toPusherKey(`user:${idToAdd}:friends`),
+        "new_friend",
+        user,
+      ),
+      pusherServer.trigger(
+        toPusherKey(`user:${session.user.id}:friends`),
+        "new_friend",
+        friend,
+      ),
+      db.sadd(`user:${session.user.id}:friends`, idToAdd),
+      db.sadd(`user:${idToAdd}:friends`, session.user.id),
+      db.srem(`user:${session.user.id}:incoming_friend_requests`, idToAdd),
+    ]);
   } catch (error) {
     if (error instanceof z.ZodError) {
       throw new Error("Invalid request payload");
@@ -172,12 +184,12 @@ export async function sendMessage(text: string, chatId: string) {
     const message = messageValidator.parse(messageData);
 
     // notify all connected chat room clients
-    pusherServer.trigger(
+    await pusherServer.trigger(
       toPusherKey(`chat:${chatId}`),
       "incoming_message",
       message,
     );
-    pusherServer.trigger(toPusherKey(`user:${friendId}:chats`), "new_message", {
+    await pusherServer.trigger(toPusherKey(`user:${friendId}:chats`), "new_message", {
       ...message,
       senderImg: sender.image ?? "",
       senderName: sender.name ?? "",

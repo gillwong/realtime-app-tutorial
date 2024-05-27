@@ -1,5 +1,6 @@
 import FriendRequestSidebarOptions from "@/components/FriendRequestSidebarOptions";
 import { type Icon, Icons } from "@/components/Icons";
+import MobileChatLayout from "@/components/MobileChatLayout";
 import SidebarChatList from "@/components/SidebarChatList";
 import SignOutButton from "@/components/SignOutButton";
 import { getFriendsByUserId } from "@/helpers/friend";
@@ -11,7 +12,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { type ReactNode } from "react";
 
-type SidebarOption = {
+export type SidebarOption = {
   id: number;
   name: string;
   href: string;
@@ -50,7 +51,16 @@ export default async function DashboardLayout({
 
   return (
     <div className="w-full flex h-screen">
-      <div className="flex h-full w-full max-w-xs grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6">
+      <div className="md:hidden">
+        <MobileChatLayout
+          friends={friends}
+          session={session}
+          sidebarOptions={sidebarOptions}
+          unseenRequestsCount={unseenRequestsCount}
+        />
+      </div>
+
+      <div className="hidden md:flex h-full w-full max-w-xs grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6">
         <Link href="/dashboard" className="flex h-16 shrink-0 items-center">
           <Icons.Logo className="h-8 w-auto text-indigo-600" />
         </Link>
@@ -131,7 +141,9 @@ export default async function DashboardLayout({
         </nav>
       </div>
 
-      <aside className="max-h-screen container py-16 md:py-12 w-full">{children}</aside>
+      <aside className="max-h-screen container py-16 md:py-12 w-full">
+        {children}
+      </aside>
     </div>
   );
 }

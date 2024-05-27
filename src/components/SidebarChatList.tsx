@@ -25,6 +25,7 @@ export default function SidebarChatList({
   const router = useRouter();
   const pathname = usePathname();
   const [unseenMessages, setUnseenMessages] = useState<Message[]>([]);
+  const [activeChats, setActiveChats] = useState<User[]>(friends);
 
   useEffect(() => {
     if (pathname?.includes("chat")) {
@@ -55,8 +56,8 @@ export default function SidebarChatList({
       setUnseenMessages((prev) => [...prev, message]);
     }
 
-    function newFriendHandler() {
-      router.refresh();
+    function newFriendHandler(newFriend: User) {
+      setActiveChats((prev) => [...prev, newFriend]);
     }
 
     pusherClient.subscribe(toPusherKey(`user:${sessionId}:chats`));

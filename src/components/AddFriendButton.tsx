@@ -8,8 +8,6 @@ import { useState } from "react";
 import { z } from "zod";
 import { createFriendRequest as addFriendAction } from "@/lib/actions";
 
-type AddFriendButtonProps = {};
-
 export type FormData = z.infer<typeof addFriendValidator>;
 
 export default function AddFriendButton() {
