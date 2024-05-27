@@ -65,7 +65,10 @@ export default async function DashboardLayout({
           <ul role="list" className="flex flex-1 flex-col gap-y-7">
             {friends.length > 0 && (
               <li>
-                <SidebarChatList sessionId={session.user.id} friends={friends} />
+                <SidebarChatList
+                  sessionId={session.user.id}
+                  friends={friends}
+                />
               </li>
             )}
 
@@ -127,7 +130,8 @@ export default async function DashboardLayout({
           </ul>
         </nav>
       </div>
-      {children}
+
+      <aside className="max-h-screen container py-16 md:py-12 w-full">{children}</aside>
     </div>
   );
 }

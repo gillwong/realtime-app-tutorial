@@ -42,7 +42,7 @@ export default function FriendRequests({
       );
       pusherClient.unbind("incoming_friend_requests", friendRequestHandler);
     };
-  }, []);
+  }, [sessionId]);
 
   async function acceptFriend(senderId: string) {
     try {
