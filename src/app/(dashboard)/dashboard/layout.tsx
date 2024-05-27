@@ -1,6 +1,8 @@
 import FriendRequestSidebarOptions from "@/components/FriendRequestSidebarOptions";
 import { type Icon, Icons } from "@/components/Icons";
+import SidebarChatList from "@/components/SidebarChatList";
 import SignOutButton from "@/components/SignOutButton";
+import { getFriendsByUserId } from "@/helpers/friend";
 import { fetchRedis } from "@/helpers/redis";
 import { auth } from "@/lib/auth";
 import { User } from "next-auth";
@@ -37,6 +39,8 @@ export default async function DashboardLayout({
     notFound();
   }
 
+  const friends = await getFriendsByUserId(session.user.id);
+
   const unseenRequestsCount = (
     (await fetchRedis(
       "smembers",
@@ -51,13 +55,19 @@ export default async function DashboardLayout({
           <Icons.Logo className="h-8 w-auto text-indigo-600" />
         </Link>
 
-        <div className="text-xs font-semibold leading-6 text-gray-400">
-          Your chats
-        </div>
+        {friends.length > 0 && (
+          <div className="text-xs font-semibold leading-6 text-gray-400">
+            Your chats
+          </div>
+        )}
 
         <nav className="flex flex-1 flex-col">
           <ul role="list" className="flex flex-1 flex-col gap-y-7">
-            <li>TODO: chats that this user have</li>
+            {friends.length > 0 && (
+              <li>
+                <SidebarChatList sessionId={session.user.id} friends={friends} />
+              </li>
+            )}
 
             <li>
               <div className="text-xs font-semibold leading-6 text-gray-400">
@@ -81,14 +91,14 @@ export default async function DashboardLayout({
                     </li>
                   );
                 })}
-              </ul>
-            </li>
 
-            <li>
-              <FriendRequestSidebarOptions
-                sessionId={session.user.id}
-                initialUnseenRequestsCount={unseenRequestsCount}
-              />
+                <li>
+                  <FriendRequestSidebarOptions
+                    sessionId={session.user.id}
+                    initialUnseenRequestsCount={unseenRequestsCount}
+                  />
+                </li>
+              </ul>
             </li>
 
             <li className="-mx-6 mt-auto flex items-center">
