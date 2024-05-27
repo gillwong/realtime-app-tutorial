@@ -54,6 +54,7 @@ export default function SidebarChatList({
 
       setUnseenMessages((prev) => [...prev, message]);
     }
+
     function newFriendHandler() {
       router.refresh();
     }
