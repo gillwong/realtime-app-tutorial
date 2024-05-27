@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { addFriendValidator } from "@/lib/validations/add-friend";
 import { useState } from "react";
 import { z } from "zod";
-import { addFriend as addFriendAction } from "@/lib/actions";
+import { createFriendeRequest as addFriendAction } from "@/lib/actions";
 
 type AddFriendButtonProps = {};
 

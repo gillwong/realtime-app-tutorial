@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { Icons } from "./Icons";
 import { Check, X } from "lucide-react";
+import { acceptFriendRequest, denyFriendRequest } from "@/lib/actions";
+import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 
 type FriendRequestsProps = {
   sessionId: string;
@@ -13,9 +16,38 @@ export default function FriendRequests({
   sessionId,
   incomingFriendRequests,
 }: FriendRequestsProps) {
+  const router = useRouter();
   const [friendRequests, setFriendRequests] = useState<IncomingFriendRequest[]>(
     incomingFriendRequests,
   );
+
+  async function acceptFriend(senderId: string) {
+    try {
+      await acceptFriendRequest(senderId);
+
+      setFriendRequests((prev) =>
+        prev.filter((request) => request.senderId !== senderId),
+      );
+    } catch (error) {
+      toast.error("There was a problem accepting friend request.");
+    } finally {
+      router.refresh();
+    }
+  }
+
+  async function denyFriend(senderId: string) {
+    try {
+      await denyFriendRequest(senderId);
+
+      setFriendRequests((prev) =>
+        prev.filter((request) => request.senderId !== senderId),
+      );
+    } catch (error) {
+      toast.error("There was a problem denying friend request.");
+    } finally {
+      router.refresh();
+    }
+  }
 
   if (friendRequests.length === 0) {
     return <p className="text-sm text-zinc-500">Nothing to show here...</p>;
@@ -28,12 +60,14 @@ export default function FriendRequests({
       <button
         aria-label="Accept friend request"
         className="size-8 bg-indigo-600 hover:bg-indigo-700 grid rounded-full place-items-center transition hover:shadow-md"
+        onClick={() => acceptFriend(request.senderId)}
       >
         <Check className="font-semibold text-white size-3/4" />
       </button>
       <button
-        aria-label="Decline friend request"
+        aria-label="Deny friend request"
         className="size-8 bg-red-600 hover:bg-red-700 grid rounded-full place-items-center transition hover:shadow-md"
+        onClick={() => denyFriend(request.senderId)}
       >
         <X className="font-semibold text-white size-3/4" />
       </button>
