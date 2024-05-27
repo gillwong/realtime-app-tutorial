@@ -11,6 +11,7 @@
   "dependencies": {
     "@auth/core": "^0.31.0",
     "@auth/upstash-redis-adapter": "^2.1.0",
+    "@headlessui/react": "^2.0.4",
     "@hookform/resolvers": "^3.4.2",
     "@upstash/redis": "^1.31.2",
     "class-variance-authority": "^0.7.0",
