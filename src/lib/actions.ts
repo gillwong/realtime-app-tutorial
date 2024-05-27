@@ -10,8 +10,11 @@ import { fetchRedis } from "@/helpers/redis";
 import { User } from "next-auth";
 import { Message, messageValidator } from "./validations/message";
 import { nanoid } from "nanoid";
+import { pusherServer } from "./pusher";
+import { toPusherKey } from "./utils";
 
 export async function createFriendRequest(formData: FormData) {
+  console.log({ formData });
   try {
     const { email: emailToAdd } = addFriendValidator.parse(formData);
 
@@ -49,9 +52,23 @@ export async function createFriendRequest(formData: FormData) {
       throw new Error("Already friends with this user.");
     }
 
+    console.log("before pusherServer triggered");
+    console.log(toPusherKey(`user:${idToAdd}:incoming_friend_requests`));
     // valid request, send friend request
+    pusherServer.trigger(
+      toPusherKey(`user:${idToAdd}:incoming_friend_requests`),
+      "incoming_friend_requests",
+      {
+        senderId: session.user.id,
+        senderEmail: session.user.email,
+      },
+    );
+
+    console.log("pusherServer triggered");
+
     db.sadd(`user:${idToAdd}:incoming_friend_requests`, session.user.id);
   } catch (error) {
+    console.error(error);
     if (error instanceof z.ZodError) {
       throw new Error("Invalid request payload");
     }
@@ -146,6 +163,13 @@ export async function sendMessage(text: string, chatId: string) {
     };
 
     const message = messageValidator.parse(messageData);
+
+    // notify all connected chat room clients
+    pusherServer.trigger(
+      toPusherKey(`chat:${chatId}`),
+      "incoming_message",
+      message,
+    );
 
     // all valid, send the message
     await db.zadd(`chat:${chatId}:messages`, {

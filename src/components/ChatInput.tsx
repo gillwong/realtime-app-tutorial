@@ -18,6 +18,7 @@ export default function ChatInput({ chatPartner, chatId }: ChatInputProps) {
   const [input, setInput] = useState("");
 
   async function sendMessage() {
+    if (!input) return;
     setIsLoading(true);
     try {
       await sendMessageAction(input, chatId);

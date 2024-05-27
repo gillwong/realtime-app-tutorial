@@ -1,19 +1,22 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn, toPusherKey } from "@/lib/utils";
 import { type Message } from "@/lib/validations/message";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import Image from "next/image";
 import { User } from "next-auth";
+import { pusherClient } from "@/lib/pusher";
 
 type MessagesProps = {
+  chatId: string;
   sessionId: string;
   initialMessages: Message[];
   sessionImg: string;
   chatPartner: User;
 };
 export default function Messages({
+  chatId,
   sessionId,
   initialMessages,
   sessionImg,
@@ -21,6 +24,20 @@ export default function Messages({
 }: MessagesProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const scrollDownRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    function messageHandler(message: Message) {
+      setMessages((prev) => [message, ...prev]);
+    }
+
+    pusherClient.subscribe(toPusherKey(`chat:${chatId}`));
+    pusherClient.bind("incoming_message", messageHandler);
+
+    return () => {
+      pusherClient.unsubscribe(toPusherKey(`chat:${chatId}`));
+      pusherClient.unbind("incoming_message", messageHandler);
+    };
+  }, []);
 
   function formatTimestamp(timestamp: number) {
     return format(timestamp, "HH:mm");

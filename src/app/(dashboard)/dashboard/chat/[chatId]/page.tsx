@@ -78,6 +78,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
       </div>
 
       <Messages
+        chatId={chatId}
         sessionId={session.user.id}
         initialMessages={initialMessages}
         sessionImg={session.user.image ?? ""}

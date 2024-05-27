@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icons } from "./Icons";
 import { Check, X } from "lucide-react";
 import { acceptFriendRequest, denyFriendRequest } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
+import { pusherClient } from "@/lib/pusher";
+import { toPusherKey } from "@/lib/utils";
 
 type FriendRequestsProps = {
   sessionId: string;
@@ -20,6 +22,27 @@ export default function FriendRequests({
   const [friendRequests, setFriendRequests] = useState<IncomingFriendRequest[]>(
     incomingFriendRequests,
   );
+
+  useEffect(() => {
+    function friendRequestHandler({
+      senderId,
+      senderEmail,
+    }: IncomingFriendRequest) {
+      setFriendRequests((prev) => [...prev, { senderId, senderEmail }]);
+    }
+
+    pusherClient.subscribe(
+      toPusherKey(`user:${sessionId}:incoming_friend_requests`),
+    );
+    pusherClient.bind("incoming_friend_requests", friendRequestHandler);
+
+    return () => {
+      pusherClient.unsubscribe(
+        toPusherKey(`user:${sessionId}:incoming_friend_requests`),
+      );
+      pusherClient.unbind("incoming_friend_requests", friendRequestHandler);
+    };
+  }, []);
 
   async function acceptFriend(senderId: string) {
     try {
