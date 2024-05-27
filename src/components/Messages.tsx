@@ -3,17 +3,29 @@
 import { cn } from "@/lib/utils";
 import { type Message } from "@/lib/validations/message";
 import { useRef, useState } from "react";
+import { format } from "date-fns";
+import Image from "next/image";
+import { User } from "next-auth";
 
 type MessagesProps = {
   sessionId: string;
   initialMessages: Message[];
+  sessionImg: string;
+  chatPartner: User;
 };
 export default function Messages({
   sessionId,
   initialMessages,
+  sessionImg,
+  chatPartner,
 }: MessagesProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const scrollDownRef = useRef<HTMLDivElement | null>(null);
+
+  function formatTimestamp(timestamp: number) {
+    return format(timestamp, "HH:mm");
+  }
+
   return (
     <div
       id="messages"
@@ -54,9 +66,29 @@ export default function Messages({
                 >
                   {message.text}{" "}
                   <span className="ml-2 text-xs text-gray-400">
-                    {message.timestamp}
+                    {formatTimestamp(message.timestamp)}
                   </span>
                 </span>
+              </div>
+
+              <div
+                className={cn(
+                  "relative size-10",
+                  isCurrentUser ? "order-2" : "order-1",
+                  hasNextMessageFromSameUser ? "invisible" : "",
+                )}
+              >
+                <Image
+                  fill
+                  src={
+                    isCurrentUser
+                      ? (sessionImg as string)
+                      : chatPartner.image ?? ""
+                  }
+                  alt="Profile picture"
+                  referrerPolicy="no-referrer"
+                  className="rounded-full"
+                />
               </div>
             </div>
           </div>

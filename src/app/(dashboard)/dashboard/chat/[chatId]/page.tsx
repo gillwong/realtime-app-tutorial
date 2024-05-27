@@ -46,7 +46,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
     notFound();
   }
 
-  const chatPartnerId = user.id === userId1 ? userId1 : userId2;
+  const chatPartnerId = user.id === userId1 ? userId2 : userId1;
   const chatPartner = (await db.get(`user:${chatPartnerId}`)) as User;
   const initialMessages = await getChatMessages(chatId);
 
@@ -71,14 +71,18 @@ export default async function ChatPage({ params }: ChatPageProps) {
               <span className="text-gray-700 mr-3 font-semibold">
                 {chatPartner.name}
               </span>
-
-              <span className="text-gray-600 text-sm">{chatPartner.email}</span>
             </div>
+            <span className="text-gray-600 text-sm">{chatPartner.email}</span>
           </div>
         </div>
       </div>
 
-      <Messages sessionId={session.user.id} initialMessages={initialMessages} />
+      <Messages
+        sessionId={session.user.id}
+        initialMessages={initialMessages}
+        sessionImg={session.user.image ?? ""}
+        chatPartner={chatPartner}
+      />
       <ChatInput chatPartner={chatPartner} chatId={chatId} />
     </div>
   );

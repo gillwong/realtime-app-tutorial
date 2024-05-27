@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 import Button from "./ui/Button";
 import { toast } from "react-hot-toast";
+import { sendMessage as sendMessageAction } from "@/lib/actions";
 
 type ChatInputProps = {
   chatPartner: User;
@@ -19,7 +20,7 @@ export default function ChatInput({ chatPartner, chatId }: ChatInputProps) {
   async function sendMessage() {
     setIsLoading(true);
     try {
-      // TODO: implement send message logic
+      await sendMessageAction(input, chatId);
       setInput("");
     } catch (error) {
       toast.error("Somthing went wrong. Please try again later.");

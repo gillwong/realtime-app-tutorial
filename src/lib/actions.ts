@@ -6,8 +6,12 @@ import { db } from "./db";
 import { z } from "zod";
 import { type FormData } from "@/components/AddFriendButton";
 import { isAlreadyAdded, isAlreadyFriends } from "@/helpers/friend";
+import { fetchRedis } from "@/helpers/redis";
+import { User } from "next-auth";
+import { Message, messageValidator } from "./validations/message";
+import { nanoid } from "nanoid";
 
-export async function createFriendeRequest(formData: FormData) {
+export async function createFriendRequest(formData: FormData) {
   try {
     const { email: emailToAdd } = addFriendValidator.parse(formData);
 
@@ -103,6 +107,52 @@ export async function denyFriendRequest(id: string) {
     if (error instanceof z.ZodError) {
       throw new Error("Invalid request payload");
     }
+    throw error;
+  }
+}
+
+export async function sendMessage(text: string, chatId: string) {
+  try {
+    const session = await auth();
+    if (!session || !session.user?.id) {
+      throw new Error("Unauthorized");
+    }
+
+    const [userId1, userId2] = chatId.split("--");
+    if (session.user.id !== userId1 && session.user.id !== userId2) {
+      throw new Error("Unauthorized");
+    }
+
+    const friendId = session.user.id === userId1 ? userId2 : userId1;
+    const friendsList: string[] = await fetchRedis(
+      "smembers",
+      `user:${session.user.id}:friends`,
+    );
+
+    const isFriend = friendsList.includes(friendId);
+    if (!isFriend) {
+      throw new Error("Unauthorized");
+    }
+
+    const sender: User = JSON.parse(
+      await fetchRedis("get", `user:${session.user.id}`),
+    );
+
+    const messageData: Message = {
+      id: nanoid(),
+      senderId: session.user.id,
+      text,
+      timestamp: Date.now(),
+    };
+
+    const message = messageValidator.parse(messageData);
+
+    // all valid, send the message
+    await db.zadd(`chat:${chatId}:messages`, {
+      score: message.timestamp,
+      member: JSON.stringify(message),
+    });
+  } catch (error) {
     throw error;
   }
 }
