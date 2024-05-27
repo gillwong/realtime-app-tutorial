@@ -1,4 +1,6 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app) and follows this [tutorial](https://youtu.be/NlXfg5Pxxh8?si=6GBmwARbJQExiTEY) using Next.js 14 and NextAuth.js 5.
+This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+
+Follows this [tutorial](https://youtu.be/NlXfg5Pxxh8?si=6GBmwARbJQExiTEY) ([original GitHub repository](https://github.com/joschan21/nextjs-realtime-chat)) using Next.js 14, NextAuth.js 5, Redis ([Upstash Redis](https://upstash.com/docs/redis/overall/getstarted)), and WebSockets ([Pusher Channels](https://pusher.com/channels/)).
 
 ## Getting Started
 
