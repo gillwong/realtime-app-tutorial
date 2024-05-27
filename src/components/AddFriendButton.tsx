@@ -65,9 +65,9 @@ export default function AddFriendButton() {
         <Button>Add</Button>
       </div>
       {showSuccessState ? (
-        <p className="mt-1 text-sm text-red-600">Friend request sent!</p>
+        <p className="mt-1 text-sm text-green-600">Friend request sent!</p>
       ) : (
-        <p className="mt-1 text-sm text-green-600">{errors.email?.message}</p>
+        <p className="mt-1 text-sm text-red-600">{errors.email?.message}</p>
       )}
     </form>
   );
