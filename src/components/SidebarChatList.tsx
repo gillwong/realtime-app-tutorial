@@ -75,7 +75,7 @@ export default function SidebarChatList({
 
   return (
     <ul role="list" className="max-h-[25rem] overflow-y-auto -mx-2 space-y-1">
-      {friends.toSorted().map((friend) => {
+      {activeChats.toSorted().map((friend) => {
         const unseenMessagesCount = unseenMessages.filter(
           (unseenMessage) => unseenMessage.senderId === friend.id,
         ).length;
