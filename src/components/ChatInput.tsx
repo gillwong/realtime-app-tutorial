@@ -21,10 +21,11 @@ export default function ChatInput({ chatPartner, chatId }: ChatInputProps) {
     if (!input) return;
     setIsLoading(true);
     try {
-      await sendMessageAction(input, chatId);
+      const { error } = await sendMessageAction(input, chatId);
+      if (!!error) throw new Error(error);
       setInput("");
     } catch (error) {
-      toast.error("Somthing went wrong. Please try again later.");
+      toast.error("Something went wrong. Please try again later.");
     } finally {
       setIsLoading(false);
     }

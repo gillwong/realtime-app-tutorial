@@ -13,8 +13,9 @@ import { nanoid } from "nanoid";
 import { pusherServer } from "./pusher";
 import { toPusherKey } from "./utils";
 
-export async function createFriendRequest(formData: FormData) {
-  console.log({ formData });
+export async function createFriendRequest(
+  formData: FormData,
+): Promise<{ error: string | null }> {
   try {
     const { email: emailToAdd } = addFriendValidator.parse(formData);
 
@@ -35,21 +36,21 @@ export async function createFriendRequest(formData: FormData) {
     const session = await auth();
 
     if (!session || !session.user?.id) {
-      throw new Error("Unauthorized");
+      return { error: "Unauthorized" };
     }
     if (!idToAdd) {
-      throw new Error("This person does not exist.");
+      return { error: "This person does not exist" };
     }
     if (idToAdd === session.user.id) {
-      throw new Error("Cannot add yourself as a friend.");
+      return { error: "Cannot add yourself as a friend" };
     }
 
     if (await isAlreadyAdded(idToAdd, session.user.id)) {
-      throw new Error("Already added this user.");
+      return { error: "Already added this user" };
     }
 
     if (await isAlreadyFriends(idToAdd, session.user.id)) {
-      throw new Error("Already friends with this user.");
+      return { error: "Already friends with this user" };
     }
 
     // valid request, send friend request
@@ -61,33 +62,36 @@ export async function createFriendRequest(formData: FormData) {
         senderEmail: session.user.email,
       },
     );
-
     db.sadd(`user:${idToAdd}:incoming_friend_requests`, session.user.id);
+
+    return { error: null };
   } catch (error) {
     console.error(error);
     if (error instanceof z.ZodError) {
-      throw new Error("Invalid request payload");
+      return { error: "Invalid request payload" };
     }
-    throw error;
+    return { error: "An unknown error occurred" };
   }
 }
 
-export async function acceptFriendRequest(id: string) {
+export async function acceptFriendRequest(
+  id: string,
+): Promise<{ error: string | null }> {
   try {
     const idToAdd = z.string().parse(id);
 
     const session = await auth();
     if (!session || !session.user?.id) {
-      throw new Error("Unauthorized");
+      return { error: "Unauthorized" };
     }
 
     if (await isAlreadyFriends(idToAdd, session.user.id)) {
-      throw new Error("Already friends with this user.");
+      return { error: "Already friends with this user" };
     }
 
     const hasFriendRequest = await isAlreadyAdded(session.user.id, idToAdd);
     if (!hasFriendRequest) {
-      throw new Error("No friend request.");
+      return { error: "No friend request from this user" };
     }
 
     const [userRaw, friendRaw]: [string, string] = await Promise.all([
@@ -116,47 +120,56 @@ export async function acceptFriendRequest(id: string) {
       db.sadd(`user:${idToAdd}:friends`, session.user.id),
       db.srem(`user:${session.user.id}:incoming_friend_requests`, idToAdd),
     ]);
+
+    return { error: null };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      throw new Error("Invalid request payload");
+      return { error: "Invalid request payload" };
     }
-    throw error;
+    return { error: "An unknown error occurred" };
   }
 }
 
-export async function denyFriendRequest(id: string) {
+export async function denyFriendRequest(
+  id: string,
+): Promise<{ error: string | null }> {
   try {
     const idToAdd = z.string().parse(id);
 
     const session = await auth();
     if (!session || !session.user?.id) {
-      throw new Error("Unauthorized");
+      return { error: "Unauthorized" };
     }
 
     const hasFriendRequest = await isAlreadyAdded(session.user.id, idToAdd);
     if (!hasFriendRequest) {
-      throw new Error("No friend request.");
+      return { error: "No friend request from this user" };
     }
 
     db.srem(`user:${session.user.id}:incoming_friend_requests`, idToAdd);
+
+    return { error: null };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      throw new Error("Invalid request payload");
+      return { error: "Invalid request payload" };
     }
-    throw error;
+    return { error: "An unknown error occurred" };
   }
 }
 
-export async function sendMessage(text: string, chatId: string) {
+export async function sendMessage(
+  text: string,
+  chatId: string,
+): Promise<{ error: string | null }> {
   try {
     const session = await auth();
     if (!session || !session.user?.id) {
-      throw new Error("Unauthorized");
+      return { error: "Unauthorized" };
     }
 
     const [userId1, userId2] = chatId.split("--");
     if (session.user.id !== userId1 && session.user.id !== userId2) {
-      throw new Error("Unauthorized");
+      return { error: "Unauthorized" };
     }
 
     const friendId = session.user.id === userId1 ? userId2 : userId1;
@@ -167,7 +180,7 @@ export async function sendMessage(text: string, chatId: string) {
 
     const isFriend = friendsList.includes(friendId);
     if (!isFriend) {
-      throw new Error("Unauthorized");
+      return { error: "Unauthorized" };
     }
 
     const sender: User = JSON.parse(
@@ -189,18 +202,24 @@ export async function sendMessage(text: string, chatId: string) {
       "incoming_message",
       message,
     );
-    await pusherServer.trigger(toPusherKey(`user:${friendId}:chats`), "new_message", {
-      ...message,
-      senderImg: sender.image ?? "",
-      senderName: sender.name ?? "",
-    });
+    await pusherServer.trigger(
+      toPusherKey(`user:${friendId}:chats`),
+      "new_message",
+      {
+        ...message,
+        senderImg: sender.image ?? "",
+        senderName: sender.name ?? "",
+      },
+    );
 
     // all valid, send the message
     await db.zadd(`chat:${chatId}:messages`, {
       score: message.timestamp,
       member: JSON.stringify(message),
     });
+
+    return { error: null };
   } catch (error) {
-    throw error;
+    return { error: "An unknown error occurred" };
   }
 }

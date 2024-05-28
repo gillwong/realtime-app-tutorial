@@ -46,7 +46,8 @@ export default function FriendRequests({
 
   async function acceptFriend(senderId: string) {
     try {
-      await acceptFriendRequest(senderId);
+      const {error } = await acceptFriendRequest(senderId);
+      if (!!error) throw new Error(error);
 
       setFriendRequests((prev) =>
         prev.filter((request) => request.senderId !== senderId),
@@ -60,7 +61,8 @@ export default function FriendRequests({
 
   async function denyFriend(senderId: string) {
     try {
-      await denyFriendRequest(senderId);
+      const {error}= await denyFriendRequest(senderId);
+      if (!!error) throw new Error(error);
 
       setFriendRequests((prev) =>
         prev.filter((request) => request.senderId !== senderId),

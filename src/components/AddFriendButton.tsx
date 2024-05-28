@@ -25,7 +25,8 @@ export default function AddFriendButton() {
   async function addFriend(email: string) {
     try {
       const validatedEmail = addFriendValidator.parse({ email });
-      await addFriendAction({ email: validatedEmail.email });
+      const { error } = await addFriendAction({ email: validatedEmail.email });
+      if (!!error) throw new Error(error);
       setShowSuccessState(true);
     } catch (error) {
       if (error instanceof z.ZodError) {
